@@ -1,7 +1,7 @@
-const core = require('@actions/core');
-const github = require('@actions/github');
-const parseConfig = require('./parseConfig');
-const validatePrTitle = require('./validatePrTitle');
+const core = require("@actions/core");
+const github = require("@actions/github");
+const parseConfig = require("./parseConfig");
+const validatePrTitle = require("./validatePrTitle");
 
 module.exports = async function run() {
   try {
@@ -18,17 +18,17 @@ module.exports = async function run() {
       validateSingleCommit,
       validateSingleCommitMatchesPrTitle,
       githubBaseUrl,
-      ignoreLabels
+      ignoreLabels,
     } = parseConfig();
 
     const client = github.getOctokit(process.env.GITHUB_TOKEN, {
-      baseUrl: githubBaseUrl
+      baseUrl: githubBaseUrl,
     });
 
     const contextPullRequest = github.context.payload.pull_request;
     if (!contextPullRequest) {
       throw new Error(
-        "This action can only be invoked in `pull_request_target` or `pull_request` events. Otherwise the pull request can't be inferred."
+        "This action can only be invoked in `pull_request_target` or `pull_request` events. Otherwise the pull request can't be inferred.",
       );
     }
 
@@ -39,10 +39,10 @@ module.exports = async function run() {
     // the user updates the title and re-runs the workflow, it would
     // be outdated. Therefore fetch the pull request via the REST API
     // to ensure we use the current title.
-    const {data: pullRequest} = await client.rest.pulls.get({
+    const { data: pullRequest } = await client.rest.pulls.get({
       owner,
       repo,
-      pull_number: contextPullRequest.number
+      pull_number: contextPullRequest.number,
     });
 
     // Ignore errors if specified labels are added.
@@ -51,7 +51,7 @@ module.exports = async function run() {
       for (const labelName of labelNames) {
         if (ignoreLabels.includes(labelName)) {
           core.info(
-            `Validation was skipped because the PR label "${labelName}" was found.`
+            `Validation was skipped because the PR label "${labelName}" was found.`,
           );
           return;
         }
@@ -72,7 +72,7 @@ module.exports = async function run() {
           subjectPattern,
           subjectPatternError,
           headerPattern,
-          headerPatternCorrespondence
+          headerPatternCorrespondence,
         });
 
         if (validateSingleCommit) {
@@ -84,15 +84,15 @@ module.exports = async function run() {
             {
               owner,
               repo,
-              pull_number: contextPullRequest.number
-            }
+              pull_number: contextPullRequest.number,
+            },
           )) {
             commits.push(...response.data);
 
             // GitHub does not count merge commits when deciding whether to use
             // the PR title or a commit message for the squash commit message.
             nonMergeCommits = commits.filter(
-              (commit) => commit.parents.length < 2
+              (commit) => commit.parents.length < 2,
             );
 
             // We only need two non-merge commits to know that the PR
@@ -114,20 +114,20 @@ module.exports = async function run() {
                 subjectPattern,
                 subjectPatternError,
                 headerPattern,
-                headerPatternCorrespondence
+                headerPatternCorrespondence,
               });
             } catch (error) {
               throw new Error(
-                `Pull request has only one commit and it's not semantic; this may lead to a non-semantic commit in the base branch (see https://github.com/community/community/discussions/16271). Amend the commit message to match the pull request title, or add another commit.`
+                `Pull request has only one commit and it's not semantic; this may lead to a non-semantic commit in the base branch (see https://github.com/community/community/discussions/16271 ). Amend the commit message to match the pull request title, or add another commit.`,
               );
             }
 
             if (validateSingleCommitMatchesPrTitle) {
               const commitTitle =
-                nonMergeCommits[0].commit.message.split('\n')[0];
+                nonMergeCommits[0].commit.message.split("\n")[0];
               if (commitTitle !== pullRequest.title) {
                 throw new Error(
-                  `The pull request has only one (non-merge) commit and in this case Github will use it as the default commit message when merging. The pull request title doesn't match the commit though ("${pullRequest.title}" vs. "${commitTitle}"). Please update the pull request title accordingly to avoid surprises.`
+                  `The pull request has only one (non-merge) commit and in this case Github will use it as the default commit message when merging. The pull request title doesn't match the commit though ("${pullRequest.title}" vs. "${commitTitle}"). Please update the pull request title accordingly to avoid surprises.`,
                 );
               }
             }
@@ -140,24 +140,24 @@ module.exports = async function run() {
 
     if (wip) {
       const newStatus =
-        isWip || validationError != null ? 'pending' : 'success';
+        isWip || validationError != null ? "pending" : "success";
 
       // When setting the status to "pending", the checks don't
       // complete. This can be used for WIP PRs in repositories
       // which don't support draft pull requests.
       // https://developer.github.com/v3/repos/statuses/#create-a-status
-      await client.request('POST /repos/:owner/:repo/statuses/:sha', {
+      await client.request("POST /repos/:owner/:repo/statuses/:sha", {
         owner,
         repo,
         sha: pullRequest.head.sha,
         state: newStatus,
-        target_url: 'https://github.com/amannn/action-semantic-pull-request',
+        target_url: "https://github.com/amannn/action-semantic-pull-request",
         description: isWip
           ? 'This PR is marked with "[WIP]".'
           : validationError
-          ? 'PR title validation failed'
-          : 'Ready for review & merge.',
-        context: 'action-semantic-pull-request'
+            ? "PR title validation failed"
+            : "Ready for review & merge.",
+        context: "action-semantic-pull-request",
       });
     }
 
