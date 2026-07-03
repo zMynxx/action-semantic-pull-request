@@ -1,3 +1,6 @@
+> [!NOTE]
+> This fork has been archieved, as my PR got merge into the official action.
+
 # action-semantic-pull-request
 
 This is a GitHub Action that ensures that your pull request titles match the [Conventional Commits spec](https://www.conventionalcommits.org/). Typically, this is used in combination with a tool like [semantic-release](https://github.com/semantic-release/semantic-release) to automate releases.
